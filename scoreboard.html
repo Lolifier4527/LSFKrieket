@@ -173,129 +173,28 @@ function pName(teams,id){return getP(teams,id)?.name||id;}
 
 function renderMatch(data){
   if(!data){
-    document.getElementById('root').innerHTML=`<div class="empty"><div class="empty-icon">🏏</div><h2>Match not found</h2><p>The match may not have started yet, or Firebase isn't configured.<br>Ask the scorer to share an updated link.</p></div>`;
+    document.getElementById('root').innerHTML=`<div class="empty"><div class="empty-icon">🏏</div><h2>Match not found</h2><p>The match may not have started yet.<br>Ask the scorer to share an updated link.</p></div>`;
     return;
   }
   const m=data, teams=m.teams||[], innings=m.innings||[];
   const curInn=innings[innings.length-1];
-  let html='';
-
-  // Result banner
-  if(m.status==='complete'&&m.result){
-    html+=`<div class="result-banner"><span style="font-size:26px">🏆</span><div><div class="card-label">Result</div><div style="font-weight:700;font-size:15px;color:var(--accent)">${m.result}</div></div></div>`;
-  }
-
-  // Match meta
-  const chips=[];
-  if(m.date)chips.push(`<span class="meta-chip"><i class="ti ti-calendar"></i>${m.date}</span>`);
-  if(m.venue)chips.push(`<span class="meta-chip"><i class="ti ti-map-pin"></i>${m.venue}</span>`);
-  if(m.format)chips.push(`<span class="meta-chip">${m.format}</span>`);
-  if(chips.length)html+=`<div class="meta-row">${chips.join('')}</div>`;
 
   if(!curInn){
-    html+=`<div class="card" style="text-align:center;padding:40px">Match hasn't started yet.</div>`;
-    document.getElementById('root').innerHTML=html;
+    document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:40px">Match hasn't started yet.</div>`;
     return;
   }
 
-  const bt=teams[curInn.bi]||{}, rr=curInn.lb>0?((curInn.total/curInn.lb)*6).toFixed(2):'0.00';
+  const bt=teams[curInn.bi]||{};
+  const active=curInn.activeBatters||[];
+  const strikerName=active.length?pName(teams,active[0]):'';
 
-  // Hero score
-  html+=`<div class="card">
-    <div class="card-label">${(teams[0]||{}).name||'Team 1'} vs ${(teams[1]||{}).name||'Team 2'}</div>
-    ${curInn.freeHit?`<div class="freehit">⚡ FREE HIT</div><br>`:''}
-    <div style="display:flex;justify-content:space-between;align-items:flex-end">
-      <div>
-        <div class="score-big">${curInn.total}/${curInn.wickets}</div>
-        <div class="score-sub">${bt.name||''} · ${ovStr(curInn.lb)} overs</div>
-      </div>
-      <div style="text-align:right">
-        <div class="rr-num">${rr}</div>
-        <div class="rr-lbl">run rate</div>
-      </div>
-    </div>`;
+  document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:32px 16px">
+    <div class="card-label">${bt.name||'Batting Team'}</div>
+    <div class="score-big" style="margin:10px 0">${curInn.total}/${curInn.wickets}</div>
+    ${strikerName?`<div style="font-size:17px;font-weight:700;color:var(--accent)">${strikerName} *</div>`:''}
+  </div>`;
 
-  // Target info
-  if(innings.length>=2){
-    const prev=innings.find(i=>i.bi!==curInn.bi);
-    if(prev&&!curInn.complete){
-      const target=prev.total+1, need=Math.max(0,target-curInn.total);
-      const ballsLeft=m.oversPerInnings>0?(m.oversPerInnings*6)-curInn.lb:null;
-      const rrr=(ballsLeft&&need>0)?((need/ballsLeft)*6).toFixed(2):null;
-      html+=`<div class="target-grid">
-        <div class="tg-item"><div class="tg-val">${target}</div><div class="tg-lbl">target</div></div>
-        <div class="tg-item"><div class="tg-val" style="color:${need>30?'var(--red)':'var(--t1)'}">${need}</div><div class="tg-lbl">needed</div></div>
-        ${rrr?`<div class="tg-item"><div class="tg-val" style="color:var(--amber)">${rrr}</div><div class="tg-lbl">req. rate</div></div>`:'<div></div>'}
-      </div>`;
-    }
-  }
-  html+=`</div>`;
-
-  // Batters at crease
-  const active=curInn.activeBatters||[], batters=curInn.batters||{};
-  if(active.length){
-    html+=`<div class="card"><div class="card-label">At the crease</div>`;
-    active.forEach((id,idx)=>{
-      const b=batters[id]||{runs:0,balls:0,fours:0,sixes:0}, isS=idx===0;
-      const sr=b.balls>0?((b.runs/b.balls)*100).toFixed(0):'0';
-      html+=`<div class="batter-row">
-        <div style="display:flex;align-items:flex-start">
-          <div class="b-dot${isS?' striker':''}"></div>
-          <div><div class="b-name${isS?' striker':''}">${pName(teams,id)}${isS?' *':''}</div><div class="b-sub">SR ${sr} · ${b.fours||0}×4 · ${b.sixes||0}×6</div></div>
-        </div>
-        <div><div class="b-runs${isS?' striker':''}">${b.runs}</div><div class="b-balls">${b.balls} balls</div></div>
-      </div>`;
-    });
-
-    // Bowler
-    const bwlId=curInn.activeBowler;
-    if(bwlId){
-      const bwl=(curInn.bowlers||{})[bwlId]||{};
-      const eco=bwl.lb>0?((bwl.runs/bwl.lb)*6).toFixed(1):'-';
-      html+=`<div class="bowler-row">
-        <div style="font-size:12px;color:var(--t3)">Bowling: <span style="color:var(--t2);font-weight:600">${pName(teams,bwlId)}</span></div>
-        <div style="font-size:12px;color:var(--t3)">${bwl.wickets||0}/${bwl.runs||0} (${ovStr(bwl.lb||0)}) · eco ${eco}</div>
-      </div>`;
-    }
-    html+=`</div>`;
-  }
-
-  // Extras
-  const ex=curInn.extras||{}, exT=(ex.b||0)+(ex.lb||0)+(ex.wd||0)+(ex.nb||0)+(ex.pen||0);
-  html+=`<div class="card"><div class="extras-row">
-    <span class="card-label" style="margin:0">Extras</span>
-    <span class="ex-total">${exT}</span>
-    <span class="ex-chip">b ${ex.b||0}</span>
-    <span class="ex-chip">lb ${ex.lb||0}</span>
-    <span class="ex-chip">wd ${ex.wd||0}</span>
-    <span class="ex-chip">nb ${ex.nb||0}</span>
-    ${ex.pen?`<span class="ex-chip">pen ${ex.pen}</span>`:''}
-  </div></div>`;
-
-  // FoW
-  if((curInn.fow||[]).length){
-    html+=`<div class="card"><div class="card-label">Fall of wickets</div><div>`;
-    curInn.fow.forEach(f=>{html+=`<span class="fow-chip">${f.w}-${f.runs} (${pName(teams,f.bat)}, ${f.ov})</span>`;});
-    html+=`</div></div>`;
-  }
-
-  // Innings tabs
-  if(innings.length>1){
-    html+=`<div class="card-label" style="margin-top:8px">All innings</div>
-      <div class="inn-tabs" id="innTabs">`;
-    innings.forEach((inn,i)=>{
-      const t=teams[inn.bi]||{}, active=i===innings.length-1;
-      html+=`<button class="itab${active?' on':''}" onclick="switchInn(${i})">${t.name}: ${inn.total}/${inn.wickets}</button>`;
-    });
-    html+=`</div><div id="innDetail"></div>`;
-  }
-
-  const upd=m.updatedAt?new Date(m.updatedAt).toLocaleTimeString():'';
-  if(upd)html+=`<div class="updated">Last updated ${upd}</div>`;
-
-  document.getElementById('root').innerHTML=html;
   window._sbMatch=m;
-  if(innings.length>1)switchInn(innings.length-1);
 }
 
 function switchInn(idx){
