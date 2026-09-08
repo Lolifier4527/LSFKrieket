@@ -112,6 +112,25 @@ main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
 .empty h2{font-size:16px;font-weight:700;color:var(--t2);margin-bottom:6px}
 .empty p{font-size:13px;line-height:1.5}
 .updated{font-size:11px;color:var(--muted);text-align:right;margin-top:8px}
+
+/* score to beat */
+.target-line{font-size:14px;color:var(--t2);margin-top:8px}
+.target-line b{color:var(--accent);font-weight:800}
+
+/* event overlay (four / six / wicket) */
+#eventOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;opacity:0;transition:opacity .25s ease}
+#eventOverlay.show{opacity:1}
+#eventOverlay .event-inner{display:flex;flex-direction:column;align-items:center;gap:10px;
+  transform:scale(.6);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
+#eventOverlay.show .event-inner{transform:scale(1)}
+.event-media{max-width:min(80vw,420px);max-height:60vh;object-fit:contain;
+  filter:drop-shadow(0 8px 30px rgba(0,0,0,.6))}
+.event-text{font-size:56px;font-weight:900;letter-spacing:.03em;
+  text-shadow:0 4px 24px rgba(0,0,0,.6)}
+.event-text.four{color:var(--green)}
+.event-text.six{color:var(--purple)}
+.event-text.wicket{color:var(--red)}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
 </head>
@@ -155,6 +174,13 @@ main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
   </div>
 </main>
 
+<div id="eventOverlay">
+  <div class="event-inner">
+    <img id="eventImg" class="event-media" style="display:none">
+    <div id="eventText" class="event-text" style="display:none"></div>
+  </div>
+</div>
+
 <script src="https://cdn.ably.com/lib/ably.min-1.js"></script>
 <script>
 // splash
@@ -170,6 +196,27 @@ function getSetting(k){return JSON.parse(localStorage.getItem('cs_settings')||'{
 function ovStr(lb){return Math.floor(lb/6)+'.'+lb%6;}
 function getP(teams,id){for(const t of(teams||[])){const p=(t.players||[]).find(p=>p.id===id);if(p)return p;}return null;}
 function pName(teams,id){return getP(teams,id)?.name||id;}
+
+// ─── event overlay (four / six / wicket) ───────────────────────────────────────
+// Drop your own media next to this file, named four.gif, six.gif, wicket.gif
+// (png/jpg/mp4 also work — just change the extension below). If a file is
+// missing, the big colored text falls back automatically.
+const EVENT_MEDIA = { four: 'four.gif', six: 'six.gif', wicket: 'wicket.gif' };
+const EVENT_TEXT = { four: 'FOUR!', six: 'SIX!', wicket: 'OUT!' };
+let lastEventTs = null, firstRender = true;
+
+function showEvent(type){
+  const overlay=document.getElementById('eventOverlay'), img=document.getElementById('eventImg'), text=document.getElementById('eventText');
+  const src=EVENT_MEDIA[type];
+  img.style.display='none'; text.style.display='none';
+  text.textContent=EVENT_TEXT[type]||''; text.className='event-text '+type;
+  img.onload=()=>{img.style.display='block'};
+  img.onerror=()=>{img.style.display='none'; text.style.display='block'};
+  if(src){ img.src=src+'?t='+Date.now(); } else { text.style.display='block'; }
+  overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
+  clearTimeout(window._eventTimer);
+  window._eventTimer=setTimeout(()=>overlay.classList.remove('show'), 2500);
+}
 
 function renderMatch(data){
   if(!data){
@@ -188,13 +235,31 @@ function renderMatch(data){
   const active=curInn.activeBatters||[];
   const strikerName=active.length?pName(teams,active[0]):'';
 
+  // Score to beat, once the second innings is underway
+  let targetLine='';
+  if(innings.length>=2){
+    const prev=innings.find(i=>i.bi!==curInn.bi);
+    if(prev){
+      const target=prev.total+1, need=Math.max(0,target-curInn.total);
+      targetLine=`<div class="target-line">Target <b>${target}</b> · need <b>${need}</b> to win</div>`;
+    }
+  }
+
   document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:32px 16px">
     <div class="card-label">${bt.name||'Batting Team'}</div>
     <div class="score-big" style="margin:10px 0">${curInn.total}/${curInn.wickets}</div>
     ${strikerName?`<div style="font-size:17px;font-weight:700;color:var(--accent)">${strikerName} *</div>`:''}
+    ${targetLine}
   </div>`;
 
   window._sbMatch=m;
+
+  // Fire the four/six/wicket animation when a new event arrives (skip on the very first render)
+  if(m.lastEvent && m.lastEvent.ts!==lastEventTs){
+    lastEventTs=m.lastEvent.ts;
+    if(!firstRender) showEvent(m.lastEvent.type);
+  }
+  firstRender=false;
 }
 
 function switchInn(idx){

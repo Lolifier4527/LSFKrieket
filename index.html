@@ -711,7 +711,8 @@ function addBall(runs, extras) {
   if(extras?.pen){i.extras.pen+=extras.pen;i.total+=extras.pen;}
   if(!i.batters[s])i.batters[s]=mkBat(s);
   const bat=i.batters[s]; bat.runs+=runs; bat.balls++;
-  if(runs===4)bat.fours++; if(runs===6)bat.sixes++;
+  if(runs===4){bat.fours++;match.lastEvent={type:'four',batter:s,ts:Date.now()};}
+  if(runs===6){bat.sixes++;match.lastEvent={type:'six',batter:s,ts:Date.now()};}
   const bw=i.bowlers[bwl]; bw.lb++; bw.runs+=runs; bw.curOvRuns+=runs;
   if(bw.lb%6===0){if(bw.curOvRuns===0)bw.maidens++;bw.curOvRuns=0;}
   i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl:bwl,runs,extras:extras||{},W:false,NB:false,legal:true,fh:false,dis:null});
@@ -793,6 +794,7 @@ function confirmWicket() {
   Object.assign(i.batters[id],{howOut:type,bowler:bwl,fielder:fielder||null,runs:i.batters[id].runs+runs,balls:i.batters[id].balls+1});
   i.total+=runs; i.wickets++; i.lb++; i.freeHit=false;
   i.fow.push({w:i.wickets,runs:i.total,ov:(i.lb/6).toFixed(1),bat:id});
+  match.lastEvent={type:'wicket',batter:id,ts:Date.now()};
   const bw=i.bowlers[bwl]; bw.lb++; bw.runs+=runs; bw.curOvRuns+=runs;
   if(!['Run Out','Retired Out','Obstructing','Timed Out'].includes(type))bw.wickets++;
   if(bw.lb%6===0){if(bw.curOvRuns===0)bw.maidens++;bw.curOvRuns=0;}
@@ -1124,7 +1126,7 @@ function syncFb(){
   try{
     const ch=ablyClient.channels.get('fairland-cricket-'+(match.shareId||match.id));
     ch.publish('score',{
-      id:match.id,shareId:match.shareId,
+      id:match.id,shareId:match.shareId,lastEvent:match.lastEvent||null,
       teams:match.teams.map(t=>({name:t.name,players:t.players})),
       date:match.date,venue:match.venue,format:match.format,oversPerInnings:match.oversPerInnings,
       status:match.status,result:match.result,updatedAt:Date.now(),
