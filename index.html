@@ -428,6 +428,7 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
 
   <div class="divider"></div>
   <button class="btn btn-ghost" style="font-size:13px;padding:10px" onclick="copyLink()">&#128279; Share Live Scoreboard Link</button>
+  <button class="btn btn-ghost" style="font-size:13px;padding:10px;margin-top:6px" onclick="copyResumeLink()">&#128279; Copy This Tab's Scorer Link</button>
   <button class="btn btn-ghost" style="font-size:12px;padding:8px;color:var(--muted);margin-top:4px" onclick="declareEnd()">Declare / End Innings</button>
 </div>
 
@@ -722,6 +723,7 @@ function startMatch() {
     toss:{winner:tw,elected:te}, innings:[], status:'active', result:'', shareId:Date.now().toString(36)
   };
   match.schedule = (t0first?[0,1,0,1]:[1,0,1,0]).slice(0,ni);
+  setMatchUrl(match);
   showOpening(0);
 }
 function showOpening(idx) {
@@ -1112,8 +1114,27 @@ function mCard(m){
 function openMatch(id){
   const h=JSON.parse(localStorage.getItem('cs_h')||'[]');
   const m=h.find(x=>x.id===id);if(!m)return;
-  if(m.status!=='complete'&&match&&match.id===id){showTab('scoring');return;}
+  if(m.status!=='complete'){
+    match=m;window._cm=m;
+    setMatchUrl(m);
+    showScr('scoring');updateUI();
+    return;
+  }
   match=m;window._cm=m;showScr('scorecard');renderCard(m);
+}
+// Keeps this browser tab's address bar pinned to this match, so a reload
+// (or a bookmark) always comes back to the same match — important when
+// running several matches from several tabs on one laptop.
+function setMatchUrl(m){
+  if(!m)return;
+  const url=new URL(window.location.href);
+  url.searchParams.set('match',m.id);
+  window.history.replaceState(null,'',url);
+}
+function copyResumeLink(){
+  if(!match)return;
+  setMatchUrl(match);
+  navigator.clipboard.writeText(window.location.href).then(()=>alert('Scorer link copied!\n\n'+window.location.href)).catch(()=>prompt('Copy link:',window.location.href));
 }
 
 // ─── export ───────────────────────────────────────────────────────────────────
@@ -1216,8 +1237,17 @@ function ovStr(lb){return Math.floor(lb/6)+'.'+lb%6;}
 // ─── init ─────────────────────────────────────────────────────────────────────
 loadSettings();
 renderHome();
-const _saved=JSON.parse(localStorage.getItem('cs_h')||'[]').find(m=>m.status==='active');
-if(_saved)match=_saved;
+(function(){
+  const h=JSON.parse(localStorage.getItem('cs_h')||'[]');
+  const active=h.filter(m=>m.status==='active');
+  const urlMatchId=new URLSearchParams(window.location.search).get('match');
+  // A tab bookmarked to a specific match always resumes that one — this is what
+  // lets several tabs each stay pinned to their own match on the same laptop.
+  let target=urlMatchId?active.find(m=>m.id===urlMatchId):null;
+  // Otherwise, only auto-resume when there's no ambiguity (exactly one match in progress).
+  if(!target&&!urlMatchId&&active.length===1)target=active[0];
+  if(target){match=target;setMatchUrl(target);showScr('scoring');updateUI();}
+})();
 </script>
 </body>
 </html>
