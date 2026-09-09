@@ -115,6 +115,14 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
 .r-5{background:var(--s2);color:var(--muted);font-size:14px;border-color:var(--glass-border)}
 .r-pen{background:var(--s2);color:var(--muted);font-size:12px;border-color:var(--glass-border)}
 
+/* penalties modal */
+.pen-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.pbtn{border:none;border-radius:10px;font-size:15px;font-weight:800;padding:14px 4px;cursor:pointer;transition:transform .08s;border:1px solid transparent}
+.pbtn:active{transform:scale(.88)}
+.pbtn.plus{background:linear-gradient(145deg,#14532d,#15803d);color:#86efac;border-color:rgba(22,163,74,.3)}
+.pbtn.minus{background:linear-gradient(145deg,#7f1d1d,#5c1414);color:#fca5a5;border-color:rgba(248,113,113,.25)}
+.pbtn.more{background:var(--s2);color:var(--t2);border-color:var(--glass-border)}
+
 /* extras */
 .ext-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
 .ebtn{border:none;border-radius:8px;font-size:13px;font-weight:700;padding:12px 4px;cursor:pointer;border:1px solid transparent}
@@ -400,7 +408,7 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
     <button class="rbtn r-4" onclick="addBall(4)">4</button>
     <button class="rbtn r-6" onclick="addBall(6)">6</button>
     <button class="rbtn r-5" onclick="addBall(5)">5</button>
-    <button class="rbtn r-pen" onclick="addBall(0,{pen:5})">PEN</button>
+    <button class="rbtn r-pen" onclick="openM('mPenalty')">PEN</button>
   </div>
 
   <!-- Extras -->
@@ -488,6 +496,52 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
       <button class="rbtn r-6" onclick="confirmExtra(6)">6</button>
     </div>
     <button class="btn btn-ghost" style="margin-top:8px;font-size:13px;padding:8px" onclick="closeM('mExtra')">Cancel</button>
+  </div>
+</div>
+
+<!-- MODAL: PENALTIES -->
+<div class="modal-bg" id="mPenalty" style="display:none">
+  <div class="modal">
+    <button class="modal-close" onclick="closeM('mPenalty')">&#10005;</button>
+    <h2>Penalties</h2>
+
+    <div class="sec-label">Runs</div>
+    <div class="run-grid">
+      <button class="rbtn r-dot" onclick="penRun(0)">0</button>
+      <button class="rbtn r-1" onclick="penRun(1)">1</button>
+      <button class="rbtn r-2" onclick="penRun(2)">2</button>
+      <button class="rbtn r-3" onclick="penRun(3)">3</button>
+      <button class="rbtn r-4" onclick="penRun(4)">4</button>
+      <button class="rbtn r-6" onclick="penRun(6)">6</button>
+      <button class="rbtn r-5" onclick="penRun(5)">5</button>
+      <button class="rbtn r-pen" onclick="penRunMore()">More</button>
+    </div>
+
+    <div class="sec-label">Penalties +</div>
+    <div class="pen-grid">
+      <button class="pbtn plus" onclick="confirmPenalty(1)">+P1</button>
+      <button class="pbtn plus" onclick="confirmPenalty(2)">+P2</button>
+      <button class="pbtn plus" onclick="confirmPenalty(3)">+P3</button>
+      <button class="pbtn plus" onclick="confirmPenalty(4)">+P4</button>
+      <button class="pbtn plus" onclick="confirmPenalty(5)">+P5</button>
+      <button class="pbtn plus" onclick="confirmPenalty(6)">+P6</button>
+      <button class="pbtn plus" onclick="confirmPenalty(7)">+P7</button>
+      <button class="pbtn more" onclick="confirmPenaltyMore(1)">More</button>
+    </div>
+
+    <div class="sec-label">Penalties &minus;</div>
+    <div class="pen-grid">
+      <button class="pbtn minus" onclick="confirmPenalty(-1)">-P1</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-2)">-P2</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-3)">-P3</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-4)">-P4</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-5)">-P5</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-6)">-P6</button>
+      <button class="pbtn minus" onclick="confirmPenalty(-7)">-P7</button>
+      <button class="pbtn more" onclick="confirmPenaltyMore(-1)">More</button>
+    </div>
+
+    <button class="btn btn-ghost" style="margin-top:4px;font-size:13px;padding:8px" onclick="closeM('mPenalty')">Cancel</button>
   </div>
 </div>
 
@@ -720,6 +774,17 @@ function addBall(runs, extras) {
   if(i.lb%6===0){i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];checkEnd();if(match.status==='active'&&!inn().complete)openBowlerM();}
   else checkEnd();
   save(); updateUI(); syncFb();
+}
+
+function penRun(n){closeM('mPenalty');addBall(n);}
+function penRunMore(){
+  const n=parseInt(prompt('Runs scored:'),10);
+  if(!isNaN(n)&&n>=0){closeM('mPenalty');addBall(n);}
+}
+function confirmPenalty(n){closeM('mPenalty');addBall(0,{pen:n});}
+function confirmPenaltyMore(sign){
+  const n=parseInt(prompt('Number of penalty runs to '+(sign<0?'deduct':'award')+':'),10);
+  if(!isNaN(n)&&n>0){closeM('mPenalty');addBall(0,{pen:sign*n});}
 }
 
 function openExtraModal(type){pendingExtra=type;document.getElementById('mExtraTitle').textContent={wd:'Wide',nb:'No Ball',b:'Bye',lb:'Leg Bye'}[type];openM('mExtra');}
