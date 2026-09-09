@@ -426,6 +426,12 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
   <!-- Undo -->
   <button class="btn btn-ghost" style="margin-top:6px;font-size:13px;padding:10px" onclick="undoLast()">&#8617; Undo last ball</button>
 
+  <!-- Manual celebration triggers -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+    <button class="btn btn-ghost" style="font-size:13px;padding:10px" onclick="fireManualEvent('superbat')">&#127951; Super Over (Batting)</button>
+    <button class="btn btn-ghost" style="font-size:13px;padding:10px" onclick="fireManualEvent('superbowl')">&#127919; Super Over (Bowling)</button>
+  </div>
+
   <div class="divider"></div>
   <button class="btn btn-ghost" style="font-size:13px;padding:10px" onclick="copyLink()">&#128279; Share Live Scoreboard Link</button>
   <button class="btn btn-ghost" style="font-size:13px;padding:10px;margin-top:6px" onclick="copyResumeLink()">&#128279; Copy This Tab's Scorer Link</button>
@@ -778,6 +784,14 @@ function addBall(runs, extras) {
   save(); updateUI(); syncFb();
 }
 
+function fireManualEvent(type){
+  if(!match||match.status!=='active')return;
+  const i=inn();
+  const who=type==='superbowl'?i.activeBowler:i.activeBatters[0];
+  match.lastEvent={type,batter:who,ts:Date.now()};
+  save();syncFb();
+}
+
 function penRun(n){closeM('mPenalty');addBall(n);}
 function penRunMore(){
   const n=parseInt(prompt('Runs scored:'),10);
@@ -803,6 +817,7 @@ function confirmExtra(addRuns) {
     i.extras.nb+=1; i.total+=1+addRuns; bw.runs+=1+addRuns; bw.noballs++;
     if(addRuns>0){if(!i.batters[s])i.batters[s]=mkBat(s);i.batters[s].runs+=addRuns;i.batters[s].balls++;}
     i.freeHit=match.format!=='Test';
+    if(i.freeHit)match.lastEvent={type:'freehit',batter:s,ts:Date.now()};
     if((1+addRuns)%2!==0)i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];
     i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:addRuns,extras:{nb:1},W:false,NB:true,legal:false,fh:false,dis:null});
   } else {
@@ -861,7 +876,7 @@ function confirmWicket() {
   Object.assign(i.batters[id],{howOut:type,bowler:bwl,fielder:fielder||null,runs:i.batters[id].runs+runs,balls:i.batters[id].balls+1});
   i.total+=runs; i.wickets++; i.lb++; i.freeHit=false;
   i.fow.push({w:i.wickets,runs:i.total,ov:(i.lb/6).toFixed(1),bat:id});
-  match.lastEvent={type:'wicket',batter:id,ts:Date.now()};
+  match.lastEvent={type:type==='Run Out'?'runout':'wicket',batter:id,ts:Date.now()};
   const bw=i.bowlers[bwl]; bw.lb++; bw.runs+=runs; bw.curOvRuns+=runs;
   if(!['Run Out','Retired Out','Obstructing','Timed Out'].includes(type))bw.wickets++;
   if(bw.lb%6===0){if(bw.curOvRuns===0)bw.maidens++;bw.curOvRuns=0;}

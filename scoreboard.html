@@ -143,6 +143,10 @@ main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
 .event-text.four{color:var(--green)}
 .event-text.six{color:var(--purple)}
 .event-text.wicket{color:var(--red)}
+.event-text.runout{color:var(--red)}
+.event-text.freehit{color:var(--amber);font-size:44px}
+.event-text.superbat{color:var(--accent)}
+.event-text.superbowl{color:var(--accent)}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
 </head>
@@ -209,12 +213,20 @@ function ovStr(lb){return Math.floor(lb/6)+'.'+lb%6;}
 function getP(teams,id){for(const t of(teams||[])){const p=(t.players||[]).find(p=>p.id===id);if(p)return p;}return null;}
 function pName(teams,id){return getP(teams,id)?.name||id;}
 
-// ─── event overlay (four / six / wicket) ───────────────────────────────────────
-// Drop your own media next to this file, named four.gif, six.gif, wicket.gif
-// (png/jpg/mp4 also work — just change the extension below). If a file is
-// missing, the big colored text falls back automatically.
-const EVENT_MEDIA = { four: 'four.gif', six: 'six.gif', wicket: 'wicket.gif' };
-const EVENT_TEXT = { four: 'FOUR!', six: 'SIX!', wicket: 'OUT!' };
+// ─── event overlay ──────────────────────────────────────────────────────────────
+// Drop your own media next to this file, named to match below (png/jpg/mp4 also
+// work — just change the extension). If a file is missing, colored text falls
+// back automatically. Files live in the events/ folder next to this file.
+const EVENT_MEDIA = {
+  four: 'events/four.gif', six: 'events/six.gif', wicket: 'events/wicket.gif',
+  runout: 'events/runout.gif', freehit: 'events/freehit.gif',
+  superbat: 'events/superbat.gif', superbowl: 'events/superbowl.gif'
+};
+const EVENT_TEXT = {
+  four: 'FOUR!', six: 'SIX!', wicket: 'OUT!',
+  runout: 'RUN OUT!', freehit: 'FREE HIT!',
+  superbat: 'SUPER OVER!', superbowl: 'SUPER OVER!'
+};
 let lastEventTs = null, firstRender = true;
 
 function showEvent(type){
