@@ -1217,7 +1217,8 @@ function downloadCSV(){
 }
 function copyLink(){
   if(!match)return;
-  const link=window.location.href.replace('index.html','')+'scoreboard.html?match='+(match.shareId||match.id);
+  const base=window.location.origin+window.location.pathname.replace('index.html','');
+  const link=base+'scoreboard.html?match='+(match.shareId||match.id);
   navigator.clipboard.writeText(link).then(()=>alert('Link copied!\n\n'+link)).catch(()=>prompt('Copy link:',link));
 }
 
