@@ -40,24 +40,24 @@ header{
 .hdr-logo{display:flex;align-items:center;gap:8px}
 .hdr-school{display:flex;flex-direction:column}
 .hdr-school-name{font-size:13px;font-weight:800;letter-spacing:.04em;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hdr-school-sub{font-size:10px;color:var(--t3);letter-spacing:.06em}
+.hdr-school-sub{font-size:10px;color:var(--t1);letter-spacing:.06em}
 .live-wrap{display:flex;align-items:center;gap:6px}
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);position:relative}
 .live-dot::before{content:'';position:absolute;inset:-4px;border-radius:50%;background:var(--red);opacity:.4;animation:pulse 1.6s ease-out infinite}
 @keyframes pulse{0%{transform:scale(.8);opacity:.6}100%{transform:scale(2.2);opacity:0}}
 .live-txt{font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em}
-.refresh-txt{font-size:11px;color:var(--t3)}
+.refresh-txt{font-size:11px;color:var(--t1)}
 main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
 
 /* cards */
 .card{background:linear-gradient(145deg,rgba(255,255,255,.04),var(--glass));border:1px solid var(--glass-b);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
-.card-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:10px}
+.card-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:10px}
 
 /* score hero */
 .score-big{font-size:60px;font-weight:900;line-height:1;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .score-sub{font-size:13px;color:var(--t3);margin-top:6px}
 .rr-num{font-size:26px;font-weight:900;color:var(--t2)}
-.rr-lbl{font-size:11px;color:var(--t3);margin-top:2px}
+.rr-lbl{font-size:11px;color:var(--t1);margin-top:2px}
 .target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--glass-b)}
 .tg-item{text-align:center}
 .tg-val{font-size:20px;font-weight:800}
@@ -114,15 +114,15 @@ main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
 .updated{font-size:11px;color:var(--muted);text-align:right;margin-top:8px}
 
 /* score to beat */
-.target-line{font-size:14px;color:var(--t2);margin-top:8px}
+.target-line{font-size:14px;color:var(--t1);margin-top:8px}
 
 /* current over */
 .over-row{margin-top:16px;padding-top:14px;border-top:1px solid var(--glass-b)}
-.over-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);margin-bottom:8px}
+.over-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:8px}
 .over-chips{display:flex;justify-content:center;gap:6px;flex-wrap:wrap}
 .over-chip{min-width:26px;height:26px;padding:0 6px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:800;background:var(--s3);color:var(--t2)}
-.over-chip.dot{background:var(--s2);color:var(--t3)}
+  font-size:12px;font-weight:800;background:var(--s3);color:var(--t1)}
+.over-chip.dot{background:var(--s2);color:var(--t1)}
 .over-chip.four{background:rgba(52,211,153,.2);color:var(--green)}
 .over-chip.six{background:rgba(167,139,250,.25);color:var(--purple);border-radius:8px}
 .over-chip.wkt{background:rgba(248,113,113,.25);color:var(--red);border-radius:8px}
@@ -131,7 +131,7 @@ main{max-width:640px;margin:0 auto;padding:14px 14px 40px}
 
 /* event overlay (four / six / wicket) */
 #eventOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
-  pointer-events:none;opacity:0;transition:opacity .25s ease}
+  padding-bottom:14vh;pointer-events:none;opacity:0;transition:opacity .25s ease}
 #eventOverlay.show{opacity:1}
 #eventOverlay .event-inner{display:flex;flex-direction:column;align-items:center;gap:10px;
   transform:scale(.6);transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
@@ -254,7 +254,7 @@ function renderMatch(data){
     const t1=teams[0]?.name||'Team 1', t2=teams[1]?.name||'Team 2';
     document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:40px">
       <div class="card-label">${t1} vs ${t2}</div>
-      <div style="margin-top:10px;color:var(--t2)">Waiting for the innings to begin&hellip;</div>
+      <div style="margin-top:10px;color:var(--t1)">Waiting for the innings to begin&hellip;</div>
     </div>`;
     return;
   }
@@ -264,8 +264,8 @@ function renderMatch(data){
   const rr=curInn.lb>0?((curInn.total/curInn.lb)*6).toFixed(2):'0.00';
   const battersRow=active.map((id,idx)=>{
     const b=(curInn.batters||{})[id]||{runs:0,balls:0}, isS=idx===0;
-    return `<span style="color:${isS?'var(--accent)':'var(--t1)'};font-weight:700">${pName(teams,id)}${isS?' *':''} <span style="color:var(--t2);font-weight:600">${b.runs||0} (${b.balls||0})</span></span>`;
-  }).join('<span style="color:var(--t3);margin:0 8px">·</span>');
+    return `<span style="color:${isS?'var(--accent)':'var(--t1)'};font-weight:700">${pName(teams,id)}${isS?' *':''} <span style="color:var(--t1);font-weight:600">${b.runs||0} (${b.balls||0})</span></span>`;
+  }).join('<span style="color:var(--t1);margin:0 8px">·</span>');
 
   // Score to beat, once the second innings is underway
   let targetLine='';
