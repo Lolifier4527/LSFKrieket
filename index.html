@@ -363,6 +363,8 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
     <select id="openBowler" style="width:100%;padding:10px 12px;background:var(--s2);color:var(--t1);border:1px solid var(--s3);border-radius:8px;font-size:15px"><option value="">-- Select --</option></select>
   </div>
   <button class="btn btn-primary" style="padding:16px;font-size:17px" onclick="confirmOpening()">&#9654; Begin Innings</button>
+  <button class="btn btn-ghost" style="margin-top:10px;font-size:13px;padding:10px" onclick="copyLink()">&#128279; Share Live Scoreboard Link</button>
+  <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:6px">Waiting on the lineup? This link already works — come back and pick openers when you have them.</div>
 </div>
 
 <!-- SCORING -->
@@ -676,6 +678,7 @@ function initAbly(key) {
 
 // ─── setup ────────────────────────────────────────────────────────────────────
 function startNewMatch() {
+  match=null; // ensure startMatch() creates a fresh match rather than revising a parked one
   document.getElementById('matchDate').value = new Date().toISOString().split('T')[0];
   mkPlayerFields(1,11); mkPlayerFields(2,11);
   showScr('setup-format');
@@ -720,16 +723,26 @@ function startMatch() {
   const te = document.getElementById('tossElect').value;
   const t0first = (tw===0&&te==='bat')||(tw===1&&te==='field');
   const ni = parseInt(document.getElementById('numInnings').value);
-  match = {
-    id: Date.now()+'', date: document.getElementById('matchDate').value,
+  const fields = {
+    date: document.getElementById('matchDate').value,
     venue: document.getElementById('matchVenue').value.trim(),
     format: fmt, oversPerInnings: getOvers(fmt), numInnings: ni,
     teams:[{name:document.getElementById('team1Name').value.trim()||'Team 1',players:getPlayers(1)},
            {name:document.getElementById('team2Name').value.trim()||'Team 2',players:getPlayers(2)}],
-    toss:{winner:tw,elected:te}, innings:[], status:'active', result:'', shareId:Date.now().toString(36)
+    toss:{winner:tw,elected:te}
   };
+  // Revising an already-created (but not-yet-started) match keeps its id/shareId,
+  // so a scoreboard link shared before openers were picked stays valid when you
+  // go back to fix something and come forward again.
+  if(match&&match.innings.length===0){
+    Object.assign(match,fields);
+  }else{
+    match=Object.assign({id:Date.now()+'',innings:[],status:'active',result:'',shareId:Date.now().toString(36)},fields);
+  }
   match.schedule = (t0first?[0,1,0,1]:[1,0,1,0]).slice(0,ni);
   setMatchUrl(match);
+  save();
+  syncFb(); // publish immediately so a scoreboard link loaded early shows team names, not a blank loader
   showOpening(0);
 }
 function showOpening(idx) {
@@ -1129,13 +1142,17 @@ function mCard(m){
 function openMatch(id){
   const h=JSON.parse(localStorage.getItem('cs_h')||'[]');
   const m=h.find(x=>x.id===id);if(!m)return;
-  if(m.status!=='complete'){
-    match=m;window._cm=m;
-    setMatchUrl(m);
-    showScr('scoring');updateUI();
-    return;
-  }
+  if(m.status!=='complete'){resumeMatch(m);return;}
   match=m;window._cm=m;showScr('scorecard');renderCard(m);
+}
+// Resumes a saved-but-unfinished match on the right screen: straight into live
+// scoring if the innings has begun, or back to picking openers if it hasn't —
+// so a match parked while waiting on late team-sheet info reopens correctly.
+function resumeMatch(m){
+  match=m;window._cm=m;
+  setMatchUrl(m);
+  if(m.innings.length===0){showOpening(m._nextInn||0);}
+  else{showScr('scoring');updateUI();}
 }
 // Keeps this browser tab's address bar pinned to this match, so a reload
 // (or a bookmark) always comes back to the same match — important when
@@ -1262,7 +1279,7 @@ renderHome();
   let target=urlMatchId?active.find(m=>m.id===urlMatchId):null;
   // Otherwise, only auto-resume when there's no ambiguity (exactly one match in progress).
   if(!target&&!urlMatchId&&active.length===1)target=active[0];
-  if(target){match=target;setMatchUrl(target);showScr('scoring');updateUI();}
+  if(target)resumeMatch(target);
 })();
 </script>
 </body>

@@ -251,7 +251,11 @@ function renderMatch(data){
   const curInn=innings[innings.length-1];
 
   if(!curInn){
-    document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:40px">Match hasn't started yet.</div>`;
+    const t1=teams[0]?.name||'Team 1', t2=teams[1]?.name||'Team 2';
+    document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:40px">
+      <div class="card-label">${t1} vs ${t2}</div>
+      <div style="margin-top:10px;color:var(--t2)">Waiting for the innings to begin&hellip;</div>
+    </div>`;
     return;
   }
 
