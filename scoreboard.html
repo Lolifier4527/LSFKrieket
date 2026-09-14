@@ -14,7 +14,7 @@
   --r:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px}
 
 /* splash */
 #splash{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
@@ -47,17 +47,17 @@ header{
 @keyframes pulse{0%{transform:scale(.8);opacity:.6}100%{transform:scale(2.2);opacity:0}}
 .live-txt{font-size:11px;font-weight:700;color:var(--red);letter-spacing:.06em}
 .refresh-txt{font-size:11px;color:var(--t1)}
-main{max-width:640px;margin:0 auto;padding:20px 14px 40px}
+main{width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:3vh 3vw}
 
 /* cards */
-.card{background:linear-gradient(145deg,rgba(255,255,255,.04),var(--glass));border:1px solid var(--glass-b);border-radius:var(--r);padding:16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
-.card-label{font-size:15px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:10px}
+.card{width:100%;max-width:1100px;background:linear-gradient(145deg,rgba(255,255,255,.04),var(--glass));border:1px solid var(--glass-b);border-radius:var(--r);padding:clamp(24px,5vh,64px) clamp(20px,4vw,56px);margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
+.card-label{font-size:clamp(18px,2.6vw,36px);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:clamp(8px,1.5vh,20px)}
 
 /* score hero */
-.score-big{font-size:44px;font-weight:900;line-height:1;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.score-big{font-size:clamp(70px,13vw,220px);font-weight:900;line-height:1;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .score-sub{font-size:13px;color:var(--t3);margin-top:6px}
 .rr-num{font-size:26px;font-weight:900;color:var(--t2)}
-.rr-lbl{font-size:16px;color:var(--t1);margin-top:2px}
+.rr-lbl{font-size:clamp(16px,2vw,26px);color:var(--t1);margin-top:clamp(4px,1vh,12px)}
 .target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--glass-b)}
 .tg-item{text-align:center}
 .tg-val{font-size:20px;font-weight:800}
@@ -114,14 +114,14 @@ main{max-width:640px;margin:0 auto;padding:20px 14px 40px}
 .updated{font-size:11px;color:var(--muted);text-align:right;margin-top:8px}
 
 /* score to beat */
-.target-line{font-size:17px;color:var(--t1);margin-top:8px}
+.target-line{font-size:clamp(18px,2.3vw,32px);color:var(--t1);margin-top:clamp(6px,1.2vh,16px)}
 
 /* current over */
-.over-row{margin-top:16px;padding-top:14px;border-top:1px solid var(--glass-b)}
-.over-lbl{font-size:14px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:8px}
-.over-chips{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
-.over-chip{min-width:32px;height:32px;padding:0 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:15px;font-weight:800;background:var(--s3);color:var(--t1)}
+.over-row{margin-top:clamp(16px,3vh,32px);padding-top:clamp(14px,2.5vh,28px);border-top:1px solid var(--glass-b)}
+.over-lbl{font-size:clamp(15px,1.8vw,24px);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:clamp(8px,1.5vh,18px)}
+.over-chips{display:flex;justify-content:center;gap:clamp(6px,1vw,14px);flex-wrap:wrap}
+.over-chip{min-width:clamp(32px,4.5vw,56px);height:clamp(32px,4.5vw,56px);padding:0 8px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(15px,1.8vw,26px);font-weight:800;background:var(--s3);color:var(--t1)}
 .over-chip.dot{background:var(--s2);color:var(--t1)}
 .over-chip.four{background:rgba(52,211,153,.2);color:var(--green)}
 .over-chip.six{background:rgba(167,139,250,.25);color:var(--purple);border-radius:8px}
@@ -240,9 +240,9 @@ function renderMatch(data){
 
   if(!curInn){
     const t1=teams[0]?.name||'Team 1', t2=teams[1]?.name||'Team 2';
-    document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:40px">
+    document.getElementById('root').innerHTML=`<div class="card" style="text-align:center">
       <div class="card-label">${t1} vs ${t2}</div>
-      <div style="margin-top:10px;color:var(--t1)">Waiting for the innings to begin&hellip;</div>
+      <div style="margin-top:10px;color:var(--t1);font-size:clamp(16px,2vw,24px)">Waiting for the innings to begin&hellip;</div>
     </div>`;
     return;
   }
@@ -286,11 +286,11 @@ function renderMatch(data){
   }
   const overRow=`<div class="over-row"><div class="over-lbl">${overLabel}</div>${overChipsHtml?`<div class="over-chips">${overChipsHtml}</div>`:''}</div>`;
 
-  document.getElementById('root').innerHTML=`<div class="card" style="text-align:center;padding:32px 16px">
+  document.getElementById('root').innerHTML=`<div class="card" style="text-align:center">
     <div class="card-label">${bt.name||'Batting Team'}</div>
-    <div class="score-big" style="margin:10px 0">${curInn.total}/${curInn.wickets}</div>
+    <div class="score-big" style="margin:clamp(6px,1.5vh,18px) 0">${curInn.total}/${curInn.wickets}</div>
     <div class="rr-lbl">run rate <b style="color:var(--t1)">${rr}</b></div>
-    ${battersRow?`<div style="font-size:21px;margin-top:10px">${battersRow}</div>`:''}
+    ${battersRow?`<div style="font-size:clamp(20px,2.8vw,38px);margin-top:clamp(8px,1.5vh,20px)">${battersRow}</div>`:''}
     ${targetLine}
     ${overRow}
   </div>`;
