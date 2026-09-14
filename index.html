@@ -833,14 +833,24 @@ function confirmExtra(addRuns) {
   if(t==='wd') {
     const tot=3+addRuns; i.extras.wd+=tot; i.total+=tot; bw.runs+=tot; bw.wides++;
     if(tot%2!==0)i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];
-    i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:0,extras:{wd:tot},W:true,NB:false,legal:false,fh:false,dis:null});
+    // Wides count as a legal ball toward the over, unless doing so would end the
+    // innings — an innings should always finish on a fair delivery, so an extra
+    // ball gets bowled instead.
+    const legal=!(match.oversPerInnings>0&&i.lb+1>=match.oversPerInnings*6);
+    if(legal){i.lb++;bw.lb++;bw.curOvRuns+=tot;if(bw.lb%6===0){if(bw.curOvRuns===0)bw.maidens++;bw.curOvRuns=0;}}
+    i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:0,extras:{wd:tot},W:true,NB:false,legal,fh:false,dis:null});
+    if(legal&&i.lb%6===0){i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];checkEnd();if(match.status==='active'&&!inn().complete)openBowlerM();save();updateUI();syncFb();return;}
   } else if(t==='nb') {
     i.extras.nb+=1; i.total+=1+addRuns; bw.runs+=1+addRuns; bw.noballs++;
     if(addRuns>0){if(!i.batters[s])i.batters[s]=mkBat(s);i.batters[s].runs+=addRuns;i.batters[s].balls++;}
     i.freeHit=match.format!=='Test';
     if(i.freeHit)match.lastEvent={type:'freehit',batter:s,ts:Date.now()};
     if((1+addRuns)%2!==0)i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];
-    i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:addRuns,extras:{nb:1},W:false,NB:true,legal:false,fh:false,dis:null});
+    // Same house rule as wides: counts as a legal ball unless it would end the innings.
+    const legal=!(match.oversPerInnings>0&&i.lb+1>=match.oversPerInnings*6);
+    if(legal){i.lb++;bw.lb++;bw.curOvRuns+=(1+addRuns);if(bw.lb%6===0){if(bw.curOvRuns===0)bw.maidens++;bw.curOvRuns=0;}}
+    i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:addRuns,extras:{nb:1},W:false,NB:true,legal,fh:false,dis:null});
+    if(legal&&i.lb%6===0){i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];checkEnd();if(match.status==='active'&&!inn().complete)openBowlerM();save();updateUI();syncFb();return;}
   } else {
     i.extras[t]+=addRuns; i.total+=addRuns; i.lb++;
     if(!i.batters[s])i.batters[s]=mkBat(s); i.batters[s].balls++;
