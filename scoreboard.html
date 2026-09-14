@@ -212,7 +212,8 @@ function showEvent(type){
   if(src){ img.src=src+'?t='+Date.now(); } else { text.style.display='block'; }
   overlay.classList.remove('show'); void overlay.offsetWidth; overlay.classList.add('show');
   clearTimeout(window._eventTimer);
-  window._eventTimer=setTimeout(()=>overlay.classList.remove('show'), 4500);
+  const duration=(type==='superbat'||type==='superbowl')?6500:4500;
+  window._eventTimer=setTimeout(()=>overlay.classList.remove('show'), duration);
 }
 
 function renderMatch(data){
