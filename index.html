@@ -495,7 +495,7 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:-apple-sy
   <div class="modal">
     <button class="modal-close" onclick="closeM('mExtra')">&#10005;</button>
     <h2 id="mExtraTitle">Extra</h2>
-    <div style="font-size:13px;color:var(--muted);margin-bottom:10px">Additional runs (beyond the 1 penalty)?</div>
+    <div id="mExtraSub" style="font-size:13px;color:var(--muted);margin-bottom:10px">Additional runs?</div>
     <div class="run-grid">
       <button class="rbtn r-dot" onclick="confirmExtra(0)">0</button>
       <button class="rbtn r-1" onclick="confirmExtra(1)">1</button>
@@ -816,14 +816,22 @@ function confirmPenaltyMore(sign){
   if(!isNaN(n)&&n>0){closeM('mPenalty');addBall(0,{pen:sign*n});}
 }
 
-function openExtraModal(type){pendingExtra=type;document.getElementById('mExtraTitle').textContent={wd:'Wide',nb:'No Ball',b:'Bye',lb:'Leg Bye'}[type];openM('mExtra');}
+function openExtraModal(type){
+  pendingExtra=type;
+  document.getElementById('mExtraTitle').textContent={wd:'Wide',nb:'No Ball',b:'Bye',lb:'Leg Bye'}[type];
+  document.getElementById('mExtraSub').textContent=
+    type==='wd'?'Additional runs (beyond the 3 penalty)?':
+    type==='nb'?'Additional runs (beyond the 1 penalty)?':
+    'Runs run?';
+  openM('mExtra');
+}
 
 function confirmExtra(addRuns) {
   closeM('mExtra');
   const i=inn(), s=i.activeBatters[0], bwl=i.activeBowler, t=pendingExtra;
   const bw=i.bowlers[bwl];
   if(t==='wd') {
-    const tot=1+addRuns; i.extras.wd+=tot; i.total+=tot; bw.runs+=tot; bw.wides++;
+    const tot=3+addRuns; i.extras.wd+=tot; i.total+=tot; bw.runs+=tot; bw.wides++;
     if(tot%2!==0)i.activeBatters=[i.activeBatters[1],i.activeBatters[0]];
     i.balls.push({ov:Math.floor(i.lb/6),lb:i.lb,bat:s,bwl,runs:0,extras:{wd:tot},W:true,NB:false,legal:false,fh:false,dis:null});
   } else if(t==='nb') {
