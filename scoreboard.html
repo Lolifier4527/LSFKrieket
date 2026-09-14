@@ -53,15 +53,14 @@ main{width:100%;min-height:100vh;display:flex;align-items:center;justify-content
 .card{width:100%;max-width:900px;background:linear-gradient(145deg,rgba(255,255,255,.04),var(--glass));border:1px solid var(--glass-b);border-radius:var(--r);padding:clamp(16px,3.5vh,40px) clamp(14px,3vw,36px);margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.06)}
 .card-label{font-size:clamp(14px,2vw,24px);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:clamp(6px,1.2vh,14px)}
 
-/* score hero */
-.score-big{font-size:clamp(40px,7.5vw,100px);font-weight:900;line-height:1;background:linear-gradient(135deg,#fff,var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.score-sub{font-size:13px;color:var(--t3);margin-top:6px}
-.rr-num{font-size:26px;font-weight:900;color:var(--t2)}
-.rr-lbl{font-size:clamp(13px,1.6vw,20px);color:var(--t1);margin-top:clamp(3px,0.8vh,8px)}
-.target-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--glass-b)}
-.tg-item{text-align:center}
-.tg-val{font-size:20px;font-weight:800}
-.tg-lbl{font-size:11px;color:var(--t3);margin-top:2px}
+/* scoreboard rows — one uniform size for every line, no hierarchy */
+.sb-team{font-size:clamp(16px,2vw,26px);font-weight:700;color:var(--t1);margin-bottom:clamp(10px,2vh,22px)}
+.sb-row{display:grid;grid-template-columns:minmax(70px,28%) 1fr;gap:10px;align-items:baseline;
+  font-size:clamp(16px,2vw,26px);margin-bottom:clamp(8px,1.6vh,18px)}
+.sb-score{font-weight:800;color:var(--accent)}
+.sb-batter{color:var(--t1)}
+.sb-batter.striker{color:var(--accent);font-weight:700}
+.sb-line{font-size:clamp(16px,2vw,26px);color:var(--t1);margin-top:clamp(8px,1.6vh,18px)}
 
 /* batter rows */
 .batter-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--glass-b)}
@@ -113,21 +112,6 @@ main{width:100%;min-height:100vh;display:flex;align-items:center;justify-content
 .empty p{font-size:13px;line-height:1.5}
 .updated{font-size:11px;color:var(--muted);text-align:right;margin-top:8px}
 
-/* score to beat */
-.target-line{font-size:clamp(14px,1.8vw,22px);color:var(--t1);margin-top:clamp(4px,1vh,10px)}
-
-/* current over */
-.over-row{margin-top:clamp(10px,2vh,20px);padding-top:clamp(10px,1.8vh,18px);border-top:1px solid var(--glass-b)}
-.over-lbl{font-size:clamp(12px,1.4vw,18px);font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--t1);margin-bottom:clamp(6px,1vh,12px)}
-.over-chips{display:flex;justify-content:center;gap:clamp(5px,0.8vw,10px);flex-wrap:wrap}
-.over-chip{min-width:clamp(24px,3.2vw,36px);height:clamp(24px,3.2vw,36px);padding:0 6px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:clamp(12px,1.4vw,18px);font-weight:800;background:var(--s3);color:var(--t1)}
-.over-chip.dot{background:var(--s2);color:var(--t1)}
-.over-chip.four{background:rgba(52,211,153,.2);color:var(--green)}
-.over-chip.six{background:rgba(167,139,250,.25);color:var(--purple);border-radius:8px}
-.over-chip.wkt{background:rgba(248,113,113,.25);color:var(--red);border-radius:8px}
-.over-chip.extra{background:rgba(251,191,36,.2);color:var(--amber);border-radius:8px}
-.target-line b{color:var(--accent);font-weight:800}
 
 /* event overlay (four / six / wicket) — sized and positioned in JS to exactly
    cover the score card, so it reads as a replacement for the score, not a
@@ -250,49 +234,34 @@ function renderMatch(data){
   const bt=teams[curInn.bi]||{};
   const active=curInn.activeBatters||[];
   const rr=curInn.lb>0?((curInn.total/curInn.lb)*6).toFixed(2):'0.00';
-  const battersRow=active.map((id,idx)=>{
-    const b=(curInn.batters||{})[id]||{runs:0,balls:0}, isS=idx===0;
-    return `<span style="color:${isS?'var(--accent)':'var(--t1)'};font-weight:700">${pName(teams,id)}${isS?' *':''} <span style="color:var(--t1);font-weight:600">${b.runs||0} (${b.balls||0})</span></span>`;
-  }).join('<span style="color:var(--t1);margin:0 8px">·</span>');
+  const batters=curInn.batters||{};
+  const strikerId=active[0], nonStrikerId=active[1];
+  const strikerName=strikerId?pName(teams,strikerId):'';
+  const nonStrikerName=nonStrikerId?pName(teams,nonStrikerId):'';
+  const s=batters[strikerId]||{runs:0,balls:0}, ns=batters[nonStrikerId]||{runs:0,balls:0};
 
-  // Score to beat, once the second innings is underway
-  let targetLine='';
+  // Second innings shows what's needed to win instead of the run rate
+  let lastLine=`Run rate: ${rr}`;
   if(innings.length>=2){
     const prev=innings.find(i=>i.bi!==curInn.bi);
     if(prev){
-      const target=prev.total+1, need=Math.max(0,target-curInn.total);
-      targetLine=`<div class="target-line">Target <b>${target}</b> · need <b>${need}</b> to win</div>`;
+      const need=Math.max(0,(prev.total+1)-curInn.total);
+      lastLine=`Required runs: ${need}`;
     }
   }
 
-  // Current over, ball by ball
-  const curOverIdx=Math.floor(curInn.lb/6);
-  const overBalls=(curInn.balls||[]).filter(b=>b.ov===curOverIdx);
-  const overLabel='Over '+ovStr(curInn.lb)
-    +(m.oversPerInnings>0?' · '+Math.max(0,(m.oversPerInnings*6)-curInn.lb)+' balls left':'');
-  let overChipsHtml='';
-  if(overBalls.length){
-    overChipsHtml=overBalls.map(b=>{
-      if(b.dis)return `<div class="over-chip wkt">W</div>`;
-      if(b.W)return `<div class="over-chip extra">wd</div>`;
-      if(b.NB)return `<div class="over-chip extra">nb${b.runs?'+'+b.runs:''}</div>`;
-      if(b.extras?.b)return `<div class="over-chip extra">${b.extras.b}b</div>`;
-      if(b.extras?.lb)return `<div class="over-chip extra">${b.extras.lb}lb</div>`;
-      if(b.runs===4)return `<div class="over-chip four">4</div>`;
-      if(b.runs===6)return `<div class="over-chip six">6</div>`;
-      if(b.runs>0)return `<div class="over-chip">${b.runs}</div>`;
-      return `<div class="over-chip dot">•</div>`;
-    }).join('');
-  }
-  const overRow=`<div class="over-row"><div class="over-lbl">${overLabel}</div>${overChipsHtml?`<div class="over-chips">${overChipsHtml}</div>`:''}</div>`;
-
-  document.getElementById('root').innerHTML=`<div class="card" style="text-align:center">
-    <div class="card-label">${bt.name||'Batting Team'}</div>
-    <div class="score-big" style="margin:clamp(4px,1vh,10px) 0">${curInn.total}/${curInn.wickets}</div>
-    <div class="rr-lbl">run rate <b style="color:var(--t1)">${rr}</b></div>
-    ${battersRow?`<div style="font-size:clamp(15px,1.9vw,22px);margin-top:clamp(5px,1vh,12px)">${battersRow}</div>`:''}
-    ${targetLine}
-    ${overRow}
+  document.getElementById('root').innerHTML=`<div class="card" style="text-align:left">
+    <div class="sb-team">${bt.name||'Batting Team'}</div>
+    <div class="sb-row">
+      <span class="sb-score">${curInn.total}/${curInn.wickets}</span>
+      <span class="sb-batter striker">${strikerName?`${strikerName} ${s.runs||0} (${s.balls||0})`:''}</span>
+    </div>
+    <div class="sb-row">
+      <span></span>
+      <span class="sb-batter">${nonStrikerName?`${nonStrikerName} ${ns.runs||0} (${ns.balls||0})`:''}</span>
+    </div>
+    <div class="sb-line">Overs: ${ovStr(curInn.lb)}</div>
+    <div class="sb-line">${lastLine}</div>
   </div>`;
 
   window._sbMatch=m;
